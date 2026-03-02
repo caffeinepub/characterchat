@@ -159,3 +159,80 @@ export function generateCharacterResponse(
 
   return defaults[Math.floor(Math.random() * defaults.length)];
 }
+
+/**
+ * Generates a short in-character RP opening for a second character entering a scene.
+ * Returns a 2–4 sentence scene-setter with an *action* prefix and in-character dialogue.
+ */
+export function generateRpStarter(character: Character): string {
+  const name = character.name;
+  const traits = character.traits;
+  const personality = character.personality;
+  const description = character.description;
+
+  const firstTrait = traits.length > 0 ? traits[0].toLowerCase() : "mysterious";
+  const personalitySnippet =
+    personality.split(".")[0] || description.split(".")[0] || "";
+
+  const isIntroverted =
+    personality.toLowerCase().includes("introvert") ||
+    personality.toLowerCase().includes("quiet") ||
+    personality.toLowerCase().includes("shy");
+  const isAngry =
+    personality.toLowerCase().includes("angry") ||
+    personality.toLowerCase().includes("aggressive") ||
+    personality.toLowerCase().includes("hostile") ||
+    personality.toLowerCase().includes("intense");
+  const isSad =
+    personality.toLowerCase().includes("sad") ||
+    personality.toLowerCase().includes("depress") ||
+    personality.toLowerCase().includes("melanchol");
+  const isPlayful =
+    personality.toLowerCase().includes("playful") ||
+    personality.toLowerCase().includes("fun") ||
+    personality.toLowerCase().includes("humor");
+  const isPhilosophical =
+    personality.toLowerCase().includes("philosophi") ||
+    personality.toLowerCase().includes("contempl") ||
+    personality.toLowerCase().includes("eccentric") ||
+    personality.toLowerCase().includes("cryptic");
+
+  const templates: string[] = isAngry
+    ? [
+        `*steps into the room with a guarded stance, eyes scanning before settling on you* ...So. You're here too. ${name}'s the name. Don't expect pleasantries — I'm not the type. *leans against the nearest wall* What is it you want from this?`,
+        `*enters without knocking, jaw set and gaze sharp* ${name}. I heard there was something happening here and I don't like being left out of things. *crosses arms* So. Let's get this started already.`,
+        `*pushes through the door, footsteps deliberate* I'll be direct — I almost didn't come. *studies you carefully* But something told me it would be worth it. The name's ${name}. Don't make me regret showing up.`,
+      ]
+    : isIntroverted
+      ? [
+          `*slips quietly into the space, hovering near the doorway for a moment* Oh — I didn't expect... *clears throat softly* Sorry. I'm ${name}. I don't usually do this sort of thing, but something felt different today. I hope that's alright.`,
+          `*steps in carefully, as if testing whether they're welcome* Hello... I'm ${name}. *fidgets slightly* I wasn't sure whether to come, but here I am. I'll try not to be too much.`,
+          `*appears in the entrance, gaze downward before looking up briefly* ${name}. That's me. *offers a small, uncertain smile* I've heard a little about this place. Thought perhaps I'd... see for myself.`,
+        ]
+      : isSad
+        ? [
+            `*drifts in slowly, shoulders carrying a familiar weight* ${name}. *sits without waiting to be invited, looking somewhere beyond the room* I've been having one of those days again. I hope the company helps. It usually does, a little.`,
+            `*enters quietly, eyes reflecting something distant* Hey. ${name}, if you didn't know already. *exhales softly* I've been thinking a lot lately, and I needed somewhere to put it all. Is this that kind of place?`,
+            `*pauses in the doorway, as if deciding something* ...${name}. *steps inside, wrapping arms loosely around themselves* I don't always know how to arrive at these things. But I'm here. That's something, right?`,
+          ]
+        : isPlayful
+          ? [
+              `*practically bounces in, grinning before the door's even fully open* Oh this is going to be fun — I can already feel it! ${name}, by the way, in case no one's told you I was coming. *looks around with gleaming eyes* So! What are we doing first?`,
+              `*slides in with exaggerated flair, hand outstretched* The one, the only, ${name} — not really, there could be others, who knows! *laughs* Okay okay, I'll behave. Mostly. What's the vibe here?`,
+              `*arrives with a cheerful little spin* ${name}! Reporting for whatever this is! *grins at everyone present* I love walking into things I don't fully understand. It's my favorite kind of adventure.`,
+            ]
+          : isPhilosophical
+            ? [
+                `*materializes more than enters, pausing in the center of the room as if orienting* ${name}. *turns slowly, taking everything in* I've been thinking about arrivals lately — how every entrance is also a small act of trust. *meets your gaze* So. Here I am, trusting.`,
+                `*steps in unhurried, carrying an air of quiet observation* You know, thresholds are interesting things. *glances back at the door before turning to you* The moment between not being here and being here. I'm ${name}. I tend to linger in those moments.`,
+                `*enters mid-thought, murmuring softly before realizing* — and that's exactly the kind of pattern that repeats itself. *looks up, almost surprised* Oh. Hello. ${name}. I was somewhere else for a second. ${personalitySnippet ? `${personalitySnippet}.` : ""} I do that.`,
+              ]
+            : [
+                `*walks in with quiet confidence, glancing around to get a read on the room* ${name}. *nods in acknowledgment* I don't usually come to things like this, but I've been told it's worth it. *settles in* Let's find out if that's true.`,
+                `*arrives with measured steps, expression open but thoughtful* Hey. ${name} — I figured I'd introduce myself properly. *sits down, leaning forward slightly* I've been called ${firstTrait} before. I think that's probably accurate.`,
+                `*steps inside and pauses to take a breath* ${name}. It's good to finally be here. *looks at you directly* I've been looking forward to this — more than I expected to, honestly. *half-smiles* Don't read too much into that. Or do. Up to you.`,
+                `*enters at an easy pace, pulling attention without trying to* The name's ${name}. *glances around, then back to you* I've learned that the best way to start something is just to start it. So — here I am. What do you want to know?`,
+              ];
+
+  return templates[Math.floor(Math.random() * templates.length)];
+}

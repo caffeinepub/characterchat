@@ -48,7 +48,10 @@ import {
   useClearChatHistory,
   useMessages,
 } from "../hooks/useQueries";
-import { generateCharacterResponse } from "../utils/aiSimulator";
+import {
+  generateCharacterResponse,
+  generateRpStarter,
+} from "../utils/aiSimulator";
 
 // Sample character data for when backend doesn't have the character
 const SAMPLE_CHARACTER_MAP: Record<string, Character> = {
@@ -281,6 +284,11 @@ export function ChatPage() {
 
   // Voice output (TTS) state
   const [ttsEnabled, setTtsEnabled] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<
+    SpeechSynthesisVoice[]
+  >([]);
+  const [selectedVoice, setSelectedVoice] =
+    useState<SpeechSynthesisVoice | null>(null);
 
   // Role-play state
   const [isRolePlayMode, setIsRolePlayMode] = useState(false);
@@ -319,6 +327,29 @@ export function ChatPage() {
     }
   }, [localMessages, isTyping]);
 
+  // Load available TTS voices (they load asynchronously in some browsers)
+  useEffect(() => {
+    if (!window.speechSynthesis) return;
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        setAvailableVoices(voices);
+        // Default to first English voice if none selected yet
+        setSelectedVoice((prev) => {
+          if (prev) return prev;
+          return voices.find((v) => v.lang.startsWith("en")) ?? null;
+        });
+      }
+    };
+
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+    return () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
+    };
+  }, []);
+
   // Cleanup speech recognition on unmount
   useEffect(() => {
     return () => {
@@ -336,9 +367,10 @@ export function ChatPage() {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.pitch = 1.0;
+      if (selectedVoice) utterance.voice = selectedVoice;
       window.speechSynthesis.speak(utterance);
     },
-    [ttsEnabled],
+    [ttsEnabled, selectedVoice],
   );
 
   const startListening = useCallback(() => {
@@ -609,6 +641,32 @@ export function ChatPage() {
               )}
             </Button>
 
+            {/* Voice picker — shown only when TTS is enabled */}
+            {ttsEnabled && availableVoices.length > 0 && (
+              <Select
+                value={selectedVoice?.name ?? ""}
+                onValueChange={(val) => {
+                  const voice = availableVoices.find((v) => v.name === val);
+                  setSelectedVoice(voice ?? null);
+                }}
+              >
+                <SelectTrigger className="h-7 text-xs bg-card border-border max-w-[180px] min-w-[120px]">
+                  <SelectValue placeholder="Default voice" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border max-h-60">
+                  {availableVoices.map((voice) => (
+                    <SelectItem
+                      key={voice.name}
+                      value={voice.name}
+                      className="text-xs"
+                    >
+                      {voice.name} ({voice.lang})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <Button
               variant="ghost"
               size="icon"
@@ -722,10 +780,25 @@ export function ChatPage() {
                   ) : (
                     <Select
                       onValueChange={(val) => {
-                        const found = otherCharacters.find(
+                        const foundCharacter = otherCharacters.find(
                           (c) => c.id.toString() === val,
                         );
-                        setSecondCharacter(found ?? null);
+                        setSecondCharacter(foundCharacter ?? null);
+                        // Have the second character send an RP starter after a short delay
+                        if (foundCharacter) {
+                          setTimeout(() => {
+                            const starterText =
+                              generateRpStarter(foundCharacter);
+                            const starterMsg: LocalMessage = {
+                              id: `rp-starter-${Date.now()}`,
+                              role: "assistant",
+                              content: starterText,
+                              timestamp: Date.now(),
+                              speakerName: foundCharacter.name,
+                            };
+                            setLocalMessages((prev) => [...prev, starterMsg]);
+                          }, 700);
+                        }
                       }}
                     >
                       <SelectTrigger className="h-7 text-xs bg-card border-border w-auto min-w-[160px] max-w-[200px]">
